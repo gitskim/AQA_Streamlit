@@ -20,3 +20,7 @@ model_ckpt_interval = 1  # in epochs
 base_learning_rate = 0.0001
 
 temporal_stride = 16
+
+BUCKET_NAME = 'aqa-diving'
+BUCKET_WEIGHT_FC6 = 'model_my_fc6_94.pth'
+BUCKET_WEIGHT_CNN = 'model_CNN_94.pth'

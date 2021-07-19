@@ -22,6 +22,7 @@ import os
 import cv2 as cv
 import tempfile
 from torchvision import transforms
+import boto3
 
 torch.manual_seed(randomseed)
 torch.cuda.manual_seed_all(randomseed)
@@ -143,11 +144,19 @@ def inference_with_one_video_frames(frames):
 
             return pred_scores
 
+
+def load_weights():
+    s3 = boto3.client('s3')
+    s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_CNN, m1_path)
+    s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_FC6, m2_path)
+
 if __name__ == '__main__':
     st.title("Olympics diving")
     st.subheader("Upload Olympics diving video and check its predicted score.")
     video_file = st.file_uploader("Upload")
 
+    with st.spinner('Loading to welcome you...'):
+        load_weights()
     # transforms.CenterCrop(H),
     if video_file is not None:
         with st.spinner('Making Prediction now...'):
