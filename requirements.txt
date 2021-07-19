@@ -1,3 +1,5 @@
 streamlit
 torch
 torchvision
+boto3
+opencv-python
