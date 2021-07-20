@@ -1,5 +1,5 @@
 streamlit
-pytorch
+torch
 torchvision
 opencv-python
 boto3==1.9.243
