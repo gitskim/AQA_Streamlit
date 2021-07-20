@@ -2,6 +2,6 @@ streamlit
 torch
 torchvision
 opencv-python
-ffmpeg
+numpy
 boto3==1.9.243
 botocore==1.12.243
