@@ -1,9 +1,6 @@
-streamlit==0.72.0
-Pillow==8.0.1
-boto3
-numpy==1.18.1
-opencv-python==4.4.0.40
-torch==1.6.0
-torchvision==0.7.0
+streamlit
+pytorch
+torchvision
+opencv
 boto3==1.9.243
 botocore==1.12.243
