@@ -23,6 +23,7 @@ import cv2 as cv
 import tempfile
 from torchvision import transforms
 import boto3
+# import urllib
 
 torch.manual_seed(randomseed)
 torch.cuda.manual_seed_all(randomseed)
@@ -144,28 +145,57 @@ def inference_with_one_video_frames(frames):
 
             return pred_scores
 
-
 def load_weights():
+    cnn_loaded = os.path.isfile(m1_path)
+    fc6_loaded = os.path.isfile(m2_path)
+    if cnn_loaded and fc6_loaded:
+        return
+
     s3 = boto3.client(
             's3',
             aws_access_key_id = st.secrets["access_id"],
             aws_secret_access_key = st.secrets["access_key"]
             )
-    s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_CNN, m1_path)
-    s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_FC6, m2_path)
+    if not cnn_loaded:
+        s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_CNN, m1_path)
+    if not fc6_loaded:
+        s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_FC6, m2_path)
+
+    # urllib.request.urlretrieve(
+    #         "https://aqa-diving.s3.us-west-2.amazonaws.com/{}".format(BUCKET_WEIGHT_CNN), m1_path)
+    # urllib.request.urlretrieve(
+    #         "https://aqa-diving.s3.us-west-2.amazonaws.com/{}".format(BUCKET_WEIGHT_FC6), m2_path)
 
 if __name__ == '__main__':
-    st.title("Olympics diving")
+    st.title("Olympics diving !JUDGE")
     st.subheader("Upload Olympics diving video and check its predicted score.")
-    video_file = st.file_uploader("Upload")
+    st.markdown("---")
+    video_file = st.file_uploader("Upload a video here", type=["mp4", "mov"])
 
-    with st.spinner('Loading to welcome you...'):
-        load_weights()
     # transforms.CenterCrop(H),
+
+    # Whenever there is a file uploaded
     if video_file is not None:
-        with st.spinner('Making Prediction now...'):
-            frames = preprocess_one_video(video_file)
-            preds = inference_with_one_video_frames(frames)
-            val = int(preds[0] * 17)
-            print(f"Predicted score after multiplication: {val}")
-            st.success("Predicted score: {}".format(val))
+        # Load the model (if needed) when user actually wants to predict
+        with st.spinner('Loading to welcome you...'):
+            load_weights()
+
+        # Display a message while perdicting
+        val = 0
+        res_img = st.empty()
+        res_msg = st.empty()
+
+        res_img.image(
+            "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
+            width = 100)
+        res_msg.markdown("### _Making Prediction now..._")
+
+        # Makig prediction
+        frames = preprocess_one_video(video_file)
+        preds = inference_with_one_video_frames(frames)
+        val = int(preds[0] * 17)
+
+        # Clear waiting messages and show results
+        print(f"Predicted score after multiplication: {val}")
+        res_img.empty()
+        res_msg.success("Predicted score: {}".format(val))
