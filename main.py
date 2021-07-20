@@ -146,7 +146,11 @@ def inference_with_one_video_frames(frames):
 
 
 def load_weights():
-    s3 = boto3.client('s3')
+    s3 = boto3.client(
+            's3',
+            aws_access_key_id = st.secrets["access_id"],
+            aws_secret_access_key = st.secrets["access_key"]
+            )
     s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_CNN, m1_path)
     s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_FC6, m2_path)
 
