@@ -170,7 +170,7 @@ if __name__ == '__main__':
     st.title("Olympics diving !JUDGE")
     st.subheader("Upload Olympics diving video and check its predicted score.")
     st.markdown("---")
-    video_file = st.file_uploader("Upload a video here", type=["mp4", "mov"])
+    video_file = st.file_uploader("Upload a video here", type=["mp4", "mov", "avi"])
 
     # transforms.CenterCrop(H),
 
