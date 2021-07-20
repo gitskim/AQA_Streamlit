@@ -1,6 +1,6 @@
 streamlit
 pytorch
 torchvision
-opencv
+opencv-python
 boto3==1.9.243
 botocore==1.12.243
