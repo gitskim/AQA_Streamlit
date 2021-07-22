@@ -116,7 +116,8 @@ def inference_with_one_video_frames(frames):
             video = video.double()
             clip_feats = torch.Tensor([])
             print(f"len(video): {len(video)}") # len(video): 1
-            for i in np.arange(0, len(video), 16):
+            print(f"vide.shape: {video.shape}") # vide.shape: torch.Size([1, 3, 144, 112, 112])
+            for i in np.arange(0, video.shape[2], 16):
                 clip = video[:, :, i:i + 16, :, :]
                 model_CNN = model_CNN.double()
                 clip_feats_temp = model_CNN(clip)
