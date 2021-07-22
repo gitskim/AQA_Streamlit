@@ -115,6 +115,7 @@ def inference_with_one_video_frames(frames):
             video = video.transpose_(1, 2)
             video = video.double()
             clip_feats = torch.Tensor([])
+            print(f"len(video): {len(video)}") # len(video): 1
             for i in np.arange(0, len(video), 16):
                 clip = video[:, :, i:i + 16, :, :]
                 model_CNN = model_CNN.double()
