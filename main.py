@@ -26,6 +26,9 @@ import tempfile
 from torchvision import transforms
 import boto3
 import urllib
+from htbuilder import HtmlElement, div, ul, li, br, hr, a, p, img, styles, classes, fonts
+from htbuilder.units import percent, px
+from htbuilder.funcs import rgba, rgb
 
 torch.manual_seed(randomseed)
 torch.cuda.manual_seed_all(randomseed)
@@ -212,6 +215,76 @@ def load_weights():
     # urllib.request.urlretrieve(
     #         "https://aqa-diving.s3.us-west-2.amazonaws.com/{}".format(BUCKET_WEIGHT_FC6), m2_path)
 
+
+def image(src_as_string, **style):
+    return img(src=src_as_string, style=styles(**style))
+
+
+def link(link, text, **style):
+    return a(_href=link, _target="_blank", style=styles(**style))(text)
+
+
+def layout(*args):
+
+    style = """
+    <style>
+      # MainMenu {visibility: hidden;}
+      footer {visibility: hidden;}
+     .stApp { bottom: 105px; }
+    </style>
+    """
+
+    style_div = styles(
+        position="fixed",
+        left=0,
+        bottom=0,
+        margin=px(0, 0, 0, 0),
+        width=percent(100),
+        color="pink",
+        text_align="center",
+        height="auto",
+        opacity=1
+    )
+
+    style_hr = styles(
+        display="block",
+        margin=px(8, 8, "auto", "auto"),
+        border_style="inset",
+        border_width=px(2)
+    )
+
+    body = p()
+    foot = div(
+        style=style_div
+    )(
+        hr(
+            style=style_hr
+        ),
+        body
+    )
+
+    st.markdown(style, unsafe_allow_html=True)
+
+    for arg in args:
+        if isinstance(arg, str):
+            body(arg)
+
+        elif isinstance(arg, HtmlElement):
+            body(arg)
+
+    st.markdown(str(foot), unsafe_allow_html=True)
+
+
+def footer():
+    myargs = [
+        "Made with ❤️ by ",
+        link("https://paritoshparmar.github.io/", "@Paritosh Parmar, "),
+        link("https://www.linkedin.com/in/yanqing-dai-2001948a/", "@Yanqing Dai, "),
+        link("https://gitskim-8a3bc.web.app/", "@Suhyun Kim"),
+        br(),
+    ]
+    layout(*myargs)
+
 if __name__ == '__main__':
     with st.spinner('Loading to welcome you...'):
         load_weights()
@@ -220,6 +293,7 @@ if __name__ == '__main__':
         st.title("AI Olympics Judge")
         st.subheader("Upload Olympics diving video and check its AI predicted score")
         st.markdown("---")
+        footer()
         video_file = st.file_uploader("Upload a video here", type=["mp4", "mov", "avi"])
 
         # Whenever there is a file uploaded
