@@ -15,6 +15,7 @@ import random
 from models.C3D_altered import C3D_altered
 from models.my_fc6 import my_fc6
 from models.score_regressor import score_regressor
+import streamlit_analytics
 from opts import *
 import numpy as np
 import streamlit as st
@@ -115,9 +116,7 @@ def inference_with_one_video_frames(frames):
             video = video.transpose_(1, 2)
             video = video.double()
             clip_feats = torch.Tensor([])
-            print(f"len(video): {len(video)}") # len(video): 1
-            print(f"vide.shape: {video.shape}") # vide.shape: torch.Size([1, 3, 144, 112, 112])
-            for i in np.arange(0, video.shape[2], 16):
+            for i in np.arange(0, len(video), 16):
                 clip = video[:, :, i:i + 16, :, :]
                 model_CNN = model_CNN.double()
                 clip_feats_temp = model_CNN(clip)
@@ -169,35 +168,34 @@ def load_weights():
     #         "https://aqa-diving.s3.us-west-2.amazonaws.com/{}".format(BUCKET_WEIGHT_FC6), m2_path)
 
 if __name__ == '__main__':
-    st.title("Olympics diving !JUDGE")
-    st.subheader("Upload Olympics diving video and check its predicted score.")
-    st.markdown("---")
-    video_file = st.file_uploader("Upload a video here", type=["mp4", "mov", "avi"])
+    with streamlit_analytics.track():
+        st.title("Olympics diving !JUDGE")
+        st.subheader("Upload Olympics diving video and check its predicted score.")
+        st.markdown("---")
+        video_file = st.file_uploader("Upload a video here", type=["mp4", "mov", "avi"])
 
-    # transforms.CenterCrop(H),
+        # Whenever there is a file uploaded
+        if video_file is not None:
+            # Load the model (if needed) when user actually wants to predict
+            with st.spinner('Loading to welcome you...'):
+                load_weights()
 
-    # Whenever there is a file uploaded
-    if video_file is not None:
-        # Load the model (if needed) when user actually wants to predict
-        with st.spinner('Loading to welcome you...'):
-            load_weights()
+            # Display a message while perdicting
+            val = 0
+            res_img = st.empty()
+            res_msg = st.empty()
 
-        # Display a message while perdicting
-        val = 0
-        res_img = st.empty()
-        res_msg = st.empty()
+            res_img.image(
+                "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
+                width = 100)
+            res_msg.markdown("### _Making Prediction now..._")
 
-        res_img.image(
-            "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
-            width = 100)
-        res_msg.markdown("### _Making Prediction now..._")
+            # Making prediction
+            frames = preprocess_one_video(video_file)
+            preds = inference_with_one_video_frames(frames)
+            val = int(preds[0] * 17)
 
-        # Makig prediction
-        frames = preprocess_one_video(video_file)
-        preds = inference_with_one_video_frames(frames)
-        val = int(preds[0] * 17)
-
-        # Clear waiting messages and show results
-        print(f"Predicted score after multiplication: {val}")
-        res_img.empty()
-        res_msg.success("Predicted score: {}".format(val))
+            # Clear waiting messages and show results
+            print(f"Predicted score after multiplication: {val}")
+            res_img.empty()
+            res_msg.success("Predicted score: {}".format(val))
