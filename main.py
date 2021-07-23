@@ -280,7 +280,7 @@ def footer():
         "Made with ❤️ by ",
         link("https://paritoshparmar.github.io/", "@Paritosh Parmar, "),
         link("https://www.linkedin.com/in/yanqing-dai-2001948a/", "@Yanqing Dai, "),
-        link("https://gitskim-8a3bc.web.app/", "@Suhyun Kim"),
+        link("https://www.linkedin.com/in/suhyundroid/", "@Suhyun Kim"),
         br(),
     ]
     layout(*myargs)
