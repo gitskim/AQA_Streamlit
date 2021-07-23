@@ -59,6 +59,37 @@ def center_crop(img, dim):
     return crop_img
 
 
+def action_classifier(frames):
+    # C3D raw
+    model_C3D = C3D()
+    model_C3D.load_state_dict(torch.load(c3d_path, map_location={'cuda:0': 'cpu'}))
+    model_C3D.eval()
+
+    with torch.no_grad():
+        X = torch.zeros((1, 3, 16, 112, 112))
+        frames2keep = np.linspace(0, frames.shape[2] - 1, 16, dtype=int)
+        ctr = 0
+        for i in frames2keep:
+            X[:, :, ctr, :, :] = frames[:, :, i, :, :]
+            ctr += 1
+        print('X shape: ', X.shape)
+
+        # modifying
+        model_C3D.eval()
+
+        # perform prediction
+        X = X*255
+        X = torch.flip(X, [1])
+        prediction = model_C3D(X)
+        prediction = prediction.data.cpu().numpy()
+
+        # print top predictions
+        top_inds = prediction[0].argsort()[::-1][:5]  # reverse sort and take five largest items
+        print('\nTop 5:')
+        print('Top inds: ', top_inds)
+    return top_inds[0]
+
+
 def preprocess_one_video(video_file):
     tfile = tempfile.NamedTemporaryFile(delete=False)
     tfile.write(video_file.read())
@@ -76,10 +107,11 @@ def preprocess_one_video(video_file):
         frame = center_crop(frame, (H, H))
         frame = transform(frame).unsqueeze(0)
         if frames is not None:
-            frame = np.vstack((frames, frame))
-            frames = frame
+            frames = np.vstack((frames, frame))
         else:
             frames = frame
+
+    print('frames shape: ', frames.shape)
 
     vf.release()
     cv.destroyAllWindows()
@@ -90,16 +122,19 @@ def preprocess_one_video(video_file):
         padding = np.zeros((rem, C, H, H))
         frames = np.vstack((frames, padding))
 
-    frames = np.expand_dims(frames, axis=0)
     # frames shape: (137, 3, 112, 112)
-    frames = DataLoader(frames, batch_size=test_batch_size, shuffle=False)
+    frames = torch.from_numpy(frames).unsqueeze(0)
+
+    print(f"video shape: {frames.shape}") # video shape: torch.Size([1, 144, 3, 112, 112])
+    frames = frames.transpose_(1, 2)
+    frames = frames.double()
     return frames
 
 
 def inference_with_one_video_frames(frames):
-    # C3D raw
-    model_C3D = C3D()
-    model_C3D.load_state_dict(torch.load(c3d_path, map_location={'cuda:0': 'cpu'}))
+    action_class = action_classifier(frames)
+    if action_class != 463:
+        return None
 
     model_CNN = C3D_altered()
     model_CNN.load_state_dict(torch.load(m1_path, map_location={'cuda:0': 'cpu'}))
@@ -114,45 +149,41 @@ def inference_with_one_video_frames(frames):
     with torch.no_grad():
         pred_scores = []
 
-        model_C3D.eval()
         model_CNN.eval()
         model_my_fc6.eval()
         model_score_regressor.eval()
 
-        for video in frames:
-            video = video.transpose_(1, 2)
-            video = video.double()
-            clip_feats = torch.Tensor([])
-            for i in np.arange(0, len(video), 16):
-                clip = video[:, :, i:i + 16, :, :]
-                model_C3D = model_C3D.double()
-                model_CNN = model_CNN.double()
-                clip_feats_temp = model_CNN(clip)
+        clip_feats = torch.Tensor([])
+        print(f"frames shape: {frames.shape}")
+        for i in np.arange(0, frames.shape[2], 16):
+            clip = frames[:, :, i:i + 16, :, :]
+            model_CNN = model_CNN.double()
+            clip_feats_temp = model_CNN(clip)
 
-                # clip_feats_temp shape: torch.Size([1, 8192])
+            # clip_feats_temp shape: torch.Size([1, 8192])
 
-                clip_feats_temp.unsqueeze_(0)
+            clip_feats_temp.unsqueeze_(0)
 
-                # clip_feats_temp unsqueeze shape: torch.Size([1, 1, 8192])
+            # clip_feats_temp unsqueeze shape: torch.Size([1, 1, 8192])
 
-                clip_feats_temp.transpose_(0, 1)
+            clip_feats_temp.transpose_(0, 1)
 
-                # clip_feats_temp transposes shape: torch.Size([1, 1, 8192])
+            # clip_feats_temp transposes shape: torch.Size([1, 1, 8192])
 
-                clip_feats = torch.cat((clip_feats.double(), clip_feats_temp), 1)
+            clip_feats = torch.cat((clip_feats.double(), clip_feats_temp), 1)
 
-                # clip_feats shape: torch.Size([1, 1, 8192])
+            # clip_feats shape: torch.Size([1, 1, 8192])
 
-            clip_feats_avg = clip_feats.mean(1)
+        clip_feats_avg = clip_feats.mean(1)
 
 
-            model_my_fc6 = model_my_fc6.double()
-            sample_feats_fc6 = model_my_fc6(clip_feats_avg)
-            model_score_regressor = model_score_regressor.double()
-            temp_final_score = model_score_regressor(sample_feats_fc6)
-            pred_scores.extend([element[0] for element in temp_final_score.data.cpu().numpy()])
+        model_my_fc6 = model_my_fc6.double()
+        sample_feats_fc6 = model_my_fc6(clip_feats_avg)
+        model_score_regressor = model_score_regressor.double()
+        temp_final_score = model_score_regressor(sample_feats_fc6)
+        pred_scores.extend([element[0] for element in temp_final_score.data.cpu().numpy()])
 
-            return pred_scores
+        return pred_scores
 
 def load_weights():
     cnn_loaded = os.path.isfile(m1_path)
@@ -208,10 +239,13 @@ if __name__ == '__main__':
                 # Making prediction
                 frames = preprocess_one_video(video_file)
                 preds = inference_with_one_video_frames(frames)
-                val = int(preds[0] * 17)
+                if preds is None:
+                    res_img.empty()
+                    res_msg.error("The uploaded video does not seem to be a diving video.")
+                else:
+                    val = int(preds[0] * 17)
 
-                # Clear waiting messages and show results
-                print(f"Predicted score after multiplication: {val}")
-                res_img.empty()
-                res_msg.success("Predicted score: {}".format(val))
-                
+                    # Clear waiting messages and show results
+                    print(f"Predicted score after multiplication: {val}")
+                    res_img.empty()
+                    res_msg.success("Predicted score: {}".format(val))
