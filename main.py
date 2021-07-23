@@ -182,36 +182,34 @@ def load_weights():
     #         "https://aqa-diving.s3.us-west-2.amazonaws.com/{}".format(BUCKET_WEIGHT_FC6), m2_path)
 
 if __name__ == '__main__':
+    with st.spinner('Loading to welcome you...'):
+        load_weights()
+
     with streamlit_analytics.track():
-        st.title("Olympics diving !JUDGE")
-        st.subheader("Upload Olympics diving video and check its predicted score.")
+        st.title("AI Olympics Judge")
+        st.subheader("Upload Olympics diving video and check its AI predicted score")
         st.markdown("---")
         video_file = st.file_uploader("Upload a video here", type=["mp4", "mov", "avi"])
 
         # Whenever there is a file uploaded
         if video_file is not None:
-            # Load the model (if needed) when user actually wants to predict
-            with st.spinner('Loading to welcome you...'):
-                load_weights()
+            # Display a message while perdicting
+            val = 0
+            res_img = st.empty()
+            res_msg = st.empty()
 
-            if st.button("!JUDGE this dive"):
-                # Display a message while perdicting
-                val = 0
-                res_img = st.empty()
-                res_msg = st.empty()
+            res_img.image(
+                "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
+                width = 100)
+            res_msg.markdown("### _Making Prediction now..._")
 
-                res_img.image(
-                    "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
-                    width = 100)
-                res_msg.markdown("### _Making Prediction now..._")
+            # Making prediction
+            frames = preprocess_one_video(video_file)
+            preds = inference_with_one_video_frames(frames)
+            val = int(preds[0] * 17)
 
-                # Making prediction
-                frames = preprocess_one_video(video_file)
-                preds = inference_with_one_video_frames(frames)
-                val = int(preds[0] * 17)
-
-                # Clear waiting messages and show results
-                print(f"Predicted score after multiplication: {val}")
-                res_img.empty()
-                res_msg.success("Predicted score: {}".format(val))
+            # Clear waiting messages and show results
+            print(f"Predicted score after multiplication: {val}")
+            res_img.empty()
+            res_msg.success("Predicted score: {}".format(val))
                 
