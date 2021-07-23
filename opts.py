@@ -9,6 +9,7 @@ m1_path = 'models/model_CNN_94.pth'
 m2_path = 'models/model_my_fc6_94.pth'
 m3_path = 'models/model_score_regressor_94.pth'
 m4_path = 'models/model_dive_classifier_94.pth'
+c3d_path = 'models/c3d.pickle'
 
 with_dive_classification = False
 with_caption = False

@@ -15,6 +15,7 @@ import random
 from models.C3D_altered import C3D_altered
 from models.my_fc6 import my_fc6
 from models.score_regressor import score_regressor
+from models.C3D_model import C3D
 import streamlit_analytics
 from opts import *
 import numpy as np
@@ -24,7 +25,7 @@ import cv2 as cv
 import tempfile
 from torchvision import transforms
 import boto3
-# import urllib
+import urllib
 
 torch.manual_seed(randomseed)
 torch.cuda.manual_seed_all(randomseed)
@@ -36,6 +37,7 @@ current_path = os.path.abspath(os.getcwd())
 m1_path = os.path.join(current_path, m1_path)
 m2_path = os.path.join(current_path, m2_path)
 m3_path = os.path.join(current_path, m3_path)
+c3d_path = os.path.join(current_path, c3d_path)
 
 transform = transforms.Compose([transforms.ToTensor(),
                                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
@@ -95,6 +97,10 @@ def preprocess_one_video(video_file):
 
 
 def inference_with_one_video_frames(frames):
+    # C3D raw
+    model_C3D = C3D()
+    model_C3D.load_state_dict(torch.load(c3d_path, map_location={'cuda:0': 'cpu'}))
+
     model_CNN = C3D_altered()
     model_CNN.load_state_dict(torch.load(m1_path, map_location={'cuda:0': 'cpu'}))
 
@@ -106,8 +112,9 @@ def inference_with_one_video_frames(frames):
     model_score_regressor = score_regressor()
     model_score_regressor.load_state_dict(torch.load(m3_path, map_location={'cuda:0': 'cpu'}))
     with torch.no_grad():
-        pred_scores = [];
+        pred_scores = []
 
+        model_C3D.eval()
         model_CNN.eval()
         model_my_fc6.eval()
         model_score_regressor.eval()
@@ -118,6 +125,7 @@ def inference_with_one_video_frames(frames):
             clip_feats = torch.Tensor([])
             for i in np.arange(0, len(video), 16):
                 clip = video[:, :, i:i + 16, :, :]
+                model_C3D = model_C3D.double()
                 model_CNN = model_CNN.double()
                 clip_feats_temp = model_CNN(clip)
 
@@ -149,7 +157,8 @@ def inference_with_one_video_frames(frames):
 def load_weights():
     cnn_loaded = os.path.isfile(m1_path)
     fc6_loaded = os.path.isfile(m2_path)
-    if cnn_loaded and fc6_loaded:
+    c3d_loaded = os.path.isfile(c3d_path)
+    if cnn_loaded and fc6_loaded and c3d_loaded:
         return
 
     s3 = boto3.client(
@@ -161,6 +170,11 @@ def load_weights():
         s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_CNN, m1_path)
     if not fc6_loaded:
         s3.download_file(BUCKET_NAME, BUCKET_WEIGHT_FC6, m2_path)
+    if not c3d_loaded:
+        urllib.request.urlretrieve(
+            "http://imagelab.ing.unimore.it/files/c3d_pytorch/c3d.pickle",
+            c3d_path
+            )
 
     # urllib.request.urlretrieve(
     #         "https://aqa-diving.s3.us-west-2.amazonaws.com/{}".format(BUCKET_WEIGHT_CNN), m1_path)
