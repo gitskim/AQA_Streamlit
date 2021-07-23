@@ -225,26 +225,27 @@ if __name__ == '__main__':
             with st.spinner('Loading to welcome you...'):
                 load_weights()
 
-            # Display a message while perdicting
-            val = 0
-            res_img = st.empty()
-            res_msg = st.empty()
+            if st.button("!JUDGE this dive"):
+                # Display a message while perdicting
+                val = 0
+                res_img = st.empty()
+                res_msg = st.empty()
 
-            res_img.image(
-                "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
-                width = 100)
-            res_msg.markdown("### _Making Prediction now..._")
+                res_img.image(
+                    "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
+                    width = 100)
+                res_msg.markdown("### _Making Prediction now..._")
 
-            # Making prediction
-            frames = preprocess_one_video(video_file)
-            preds = inference_with_one_video_frames(frames)
-            if preds is None:
-                res_img.empty()
-                res_msg.error("The uploaded video does not seem to be a diving video.")
-            else:
-                val = int(preds[0] * 17)
+                # Making prediction
+                frames = preprocess_one_video(video_file)
+                preds = inference_with_one_video_frames(frames)
+                if preds is None:
+                    res_img.empty()
+                    res_msg.error("The uploaded video does not seem to be a diving video.")
+                else:
+                    val = int(preds[0] * 17)
 
-                # Clear waiting messages and show results
-                print(f"Predicted score after multiplication: {val}")
-                res_img.empty()
-                res_msg.success("Predicted score: {}".format(val))
+                    # Clear waiting messages and show results
+                    print(f"Predicted score after multiplication: {val}")
+                    res_img.empty()
+                    res_msg.success("Predicted score: {}".format(val))
