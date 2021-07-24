@@ -28,8 +28,7 @@ import boto3
 import urllib
 from htbuilder import HtmlElement, div, ul, li, br, hr, a, p, img, styles, classes, fonts
 from htbuilder.units import percent, px
-from htbuilder.funcs import rgba, rgb
-from streamlit_player import st_player
+import base64
 
 torch.manual_seed(randomseed)
 torch.cuda.manual_seed_all(randomseed)
@@ -231,7 +230,7 @@ def layout(*args):
     <style>
       # MainMenu {visibility: hidden;}
       footer {visibility: hidden;}
-     .stApp { bottom: 105px; }
+     .stApp { bottom: 90px; }
     </style>
     """
 
@@ -283,9 +282,17 @@ if __name__ == '__main__':
     with streamlit_analytics.track():
         st.title("AI Olympics Judge")
         st.subheader("Upload Olympics diving video and check its AI predicted score")
-        st.markdown("---")
+        col1, col2, col3 = st.beta_columns([1,1,1])
+        with col2:
+            diving_img = st.empty()
+            diving_img.image(
+                "https://raw.githubusercontent.com/gitskim/MTL-AQA/master/diving_sample.gif",
+                width = 200)
         footer()
+
         video_file = st.file_uploader("Upload a video here", type=["mp4", "mov", "avi"])
+        diving_img = st.empty()
+
 
         # Whenever there is a file uploaded
         if video_file is not None:
@@ -293,11 +300,13 @@ if __name__ == '__main__':
             val = 0
             res_img = st.empty()
             res_msg = st.empty()
-
-            res_img.image(
-                "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
-                width = 100)
-            res_msg.markdown("### _Making Prediction now..._")
+            col1, col2, col3 = st.beta_columns([1,1,1])
+            with col2:
+                res_img.image(
+                    "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
+                    width = 100)
+                diving_img.empty()
+                res_msg.markdown("### _Making Prediction now..._")
 
             # Making prediction
             frames = preprocess_one_video(video_file)
