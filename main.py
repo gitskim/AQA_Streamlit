@@ -230,7 +230,7 @@ def layout(*args):
     <style>
       # MainMenu {visibility: hidden;}
       footer {visibility: hidden;}
-     .stApp { bottom: 90px; }
+     # .stApp { bottom: 90px; }
     </style>
     """
 
