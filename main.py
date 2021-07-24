@@ -29,6 +29,7 @@ import urllib
 from htbuilder import HtmlElement, div, ul, li, br, hr, a, p, img, styles, classes, fonts
 from htbuilder.units import percent, px
 from htbuilder.funcs import rgba, rgb
+from streamlit_player import st_player
 
 torch.manual_seed(randomseed)
 torch.cuda.manual_seed_all(randomseed)
@@ -246,20 +247,10 @@ def layout(*args):
         opacity=1
     )
 
-    style_hr = styles(
-        display="block",
-        margin=px(8, 8, "auto", "auto"),
-        border_style="inset",
-        border_width=px(2)
-    )
-
     body = p()
     foot = div(
         style=style_div
     )(
-        hr(
-            style=style_hr
-        ),
         body
     )
 
