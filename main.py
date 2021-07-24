@@ -308,14 +308,17 @@ if __name__ == '__main__':
 
             # Making prediction
             frames = preprocess_one_video(video_file)
-            preds = inference_with_one_video_frames(frames)
-            if preds is None:
-                res_img.empty()
-                res_msg.error("The uploaded video does not seem to be a diving video.")
+            if frames.shape[2] > 400:
+                res_msg.error("The uploaded video is too long.")
             else:
-                val = int(preds[0] * 17)
+                preds = inference_with_one_video_frames(frames)
+                if preds is None:
+                    res_img.empty()
+                    res_msg.error("The uploaded video does not seem to be a diving video.")
+                else:
+                    val = int(preds[0] * 17)
 
-                # Clear waiting messages and show results
-                print(f"Predicted score after multiplication: {val}")
-                res_img.empty()
-                res_msg.success("Predicted score: {}".format(val))
+                    # Clear waiting messages and show results
+                    print(f"Predicted score after multiplication: {val}")
+                    res_img.empty()
+                    res_msg.success("Predicted score: {}".format(val))
