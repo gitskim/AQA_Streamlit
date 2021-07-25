@@ -305,9 +305,7 @@ def make_prediction(video_file):
 if __name__ == '__main__':
     with st.spinner('Loading to welcome you...'):
         load_weights()
-    load_dotenv(find_dotenv())
-    SECRET_KEY = os.environ["password"]
-    with streamlit_analytics.track(unsafe_password=SECRET_KEY):
+    with streamlit_analytics.track(unsafe_password=st.secrets["analytics"]):
         st.title("AI Olympics Judge")
         st.subheader("Upload Olympics diving video and check its AI predicted score")
         footer()
