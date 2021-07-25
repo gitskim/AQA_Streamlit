@@ -28,7 +28,7 @@ import boto3
 import urllib
 from htbuilder import HtmlElement, div, ul, li, br, hr, a, p, img, styles, classes, fonts
 from htbuilder.units import percent, px
-import base64
+from dotenv import load_dotenv, find_dotenv
 
 torch.manual_seed(randomseed)
 torch.cuda.manual_seed_all(randomseed)
@@ -305,8 +305,9 @@ def make_prediction(video_file):
 if __name__ == '__main__':
     with st.spinner('Loading to welcome you...'):
         load_weights()
-
-    with streamlit_analytics.track():
+    load_dotenv(find_dotenv())
+    SECRET_KEY = os.environ["password"]
+    with streamlit_analytics.track(unsafe_password=SECRET_KEY):
         st.title("AI Olympics Judge")
         st.subheader("Upload Olympics diving video and check its AI predicted score")
         footer()
