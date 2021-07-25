@@ -94,10 +94,13 @@ def action_classifier(frames):
 
 
 def preprocess_one_video(video_file):
-    tfile = tempfile.NamedTemporaryFile(delete=False)
-    tfile.write(video_file.read())
+    if video_file != "sample":
+        tfile = tempfile.NamedTemporaryFile(delete=False)
+        tfile.write(video_file.read())
 
-    vf = cv.VideoCapture(tfile.name)
+        vf = cv.VideoCapture(tfile.name)
+    else:
+        vf = cv.VideoCapture("054.avi")
 
     # https: // discuss.streamlit.io / t / how - to - access - uploaded - video - in -streamlit - by - open - cv / 5831 / 8
     frames = None
@@ -273,6 +276,32 @@ def footer():
     ]
     layout(*myargs)
 
+
+def make_prediction(video_file):
+    if video_file is not None or video_file == "sample":
+        # Display a message while perdicting
+        val = 0
+        res_img = st.empty()
+        res_msg = st.empty()
+
+        # Making prediction
+        frames = preprocess_one_video(video_file)
+        if frames.shape[2] > 400:
+            res_msg.error("The uploaded video is too long.")
+        else:
+            preds = inference_with_one_video_frames(frames)
+            if preds is None:
+                res_img.empty()
+                res_msg.error("The uploaded video does not seem to be a diving video.")
+            else:
+                val = int(preds[0] * 17)
+
+                # Clear waiting messages and show results
+                print(f"Predicted score after multiplication: {val}")
+                res_img.empty()
+                res_msg.success("Predicted score: {}".format(val))
+
+
 if __name__ == '__main__':
     with st.spinner('Loading to welcome you...'):
         load_weights()
@@ -280,20 +309,25 @@ if __name__ == '__main__':
     with streamlit_analytics.track():
         st.title("AI Olympics Judge")
         st.subheader("Upload Olympics diving video and check its AI predicted score")
-        col1, col2, col3 = st.beta_columns([1,1,1])
-        with col2:
-            diving_img = st.empty()
-            diving_img.image(
-                "https://raw.githubusercontent.com/gitskim/MTL-AQA/master/diving_sample.gif",
-                width = 200)
         footer()
 
         video_file = st.file_uploader("Upload a video here", type=["mp4", "mov", "avi"])
-        diving_img = st.empty()
+        if video_file is None:
+            st.subheader("Don't have Olympics diving videos? Try the sample video below.")
+            diving_img = st.empty()
+            if st.button("Sample Video"):
+                diving_img.empty()
+                diving_img.image(
+                    "https://raw.githubusercontent.com/gitskim/MTL-AQA/master/diving_sample.gif",
+                    width = 300)
+                col2 = st.empty()
+                col2.markdown("Actual Score: 84.15")
+                col2_msg = st.empty()
+                col2_msg.error("Please wait. Making predictions now...")
+                make_prediction("sample")
+                col2_msg.empty()
 
-
-        # Whenever there is a file uploaded
-        if video_file is not None:
+        else:
             # Display a message while perdicting
             val = 0
             res_img = st.empty()
@@ -303,7 +337,6 @@ if __name__ == '__main__':
                 res_img.image(
                     "https://media.tenor.com/images/eab0c68ee47331c4b86d679633e6d7bc/tenor.gif",
                     width = 100)
-                diving_img.empty()
                 res_msg.markdown("### _Making Prediction now..._")
 
             # Making prediction
@@ -322,3 +355,6 @@ if __name__ == '__main__':
                     print(f"Predicted score after multiplication: {val}")
                     res_img.empty()
                     res_msg.success("Predicted score: {}".format(val))
+
+
+
