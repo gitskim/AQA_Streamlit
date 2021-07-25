@@ -317,7 +317,7 @@ if __name__ == '__main__':
             if st.button("Sample Video"):
                 diving_img.empty()
                 diving_img.image(
-                    "https://raw.githubusercontent.com/gitskim/MTL-AQA/master/diving_sample.gif",
+                    "https://github.com/gitskim/AQA_Streamlit/blob/main/054.gif",
                     width = 300)
                 col2 = st.empty()
                 col2.markdown("Actual Score: 84.15")
