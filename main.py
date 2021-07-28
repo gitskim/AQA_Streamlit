@@ -28,7 +28,6 @@ import boto3
 import urllib
 from htbuilder import HtmlElement, div, ul, li, br, hr, a, p, img, styles, classes, fonts
 from htbuilder.units import percent, px
-from dotenv import load_dotenv, find_dotenv
 
 torch.manual_seed(randomseed)
 torch.cuda.manual_seed_all(randomseed)
