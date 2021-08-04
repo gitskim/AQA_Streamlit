@@ -7,3 +7,4 @@ numpy
 boto3==1.9.243
 botocore==1.12.243
 htbuilder
+python-dotenv
