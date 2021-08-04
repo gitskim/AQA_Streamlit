@@ -14,3 +14,10 @@ This repo contains the Streamlit application code to judge the Olympics diving e
 }
 ```
 
+## To run locally
+
+```
+git fetch origin local
+git checkout local
+streamlit run main.app
+```
